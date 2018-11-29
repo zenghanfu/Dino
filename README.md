@@ -45,3 +45,7 @@ while True:
     if solutionsExhausted:
         break
 ```
+
+Have fun using Dino!  If you have any issues that arise, or think a new feature should be added, please do let me know!
+
+As a note, I am not currently accepting pull requests.
