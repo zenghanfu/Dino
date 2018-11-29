@@ -8,7 +8,7 @@ from math import ceil, floor
 
 
 class Optimizer:
-    def __init__(self, populationSize: int = 20, chanceOfMutation: int = 5):
+    def __init__(self, populationSize: int = 10, chanceOfMutation: int = 5):
         """
         The main interface to Dino.
 
@@ -19,7 +19,7 @@ class Optimizer:
         was created randomly, but the second generation was optimized from the first generation's results.
 
         :param populationSize: The number of solutions(Individuals) generated and tried per generation
-        :param chanceOfMutation: A value between 1 and 100.  An integer value dictating the chance of a new Individual's chance of mutating
+        :param chanceOfMutation: A value between 1 and 100.  An integer value dictating a new Individual's chance of mutating
         """
         self.populationSize: int = populationSize
         self.numGenerationsCompleted: int = 0
@@ -33,9 +33,9 @@ class Optimizer:
         self.bestGenes = None
         self.listOfHashes: list = []
         self.numPossibleSolutions: int = 0
-        self.scoreImproved: bool = False
-        self.baselineMutationRate: int = chanceOfMutation
-        self.curMutationRate: int = self.baselineMutationRate
+        # self.scoreImproved: bool = False
+        self.baselineMutationChance: int = chanceOfMutation
+        self.curMutationChance: int = self.baselineMutationChance
 
     def addGene(self, label: str, gene: object):
         """
@@ -150,7 +150,7 @@ class Optimizer:
         print("Possible solutions remaining: " + str(self.numPossibleSolutions))
 
         if inputScore < self.bestScore:
-            self.scoreImproved = True
+            # self.scoreImproved = True
             self.bestScore = inputScore
             self.bestGenes = self.curIndividual.genes
             if userArtifact is not None:
@@ -169,17 +169,17 @@ class Optimizer:
 
         self.curIndividualNum = 0
 
-        # Check if there was score improvement in the last generation.  If not, up the mutation rate.
-        # If there was improvement, drop the mutation rate back to baseline
-        if self.scoreImproved is True:
-            self.scoreImproved = False
-            if self.curMutationRate != self.baselineMutationRate:
-                self.curMutationRate = self.baselineMutationRate
-        elif self.scoreImproved is False:
-            if self.curMutationRate < 100:
-                self.curMutationRate += 5
-                if self.curMutationRate > 100:
-                    self.curMutationRate = 100
+        # # Check if there was score improvement in the last generation.  If not, up the mutation rate.
+        # # If there was improvement, drop the mutation rate back to baseline
+        # if self.scoreImproved is True:
+        #     self.scoreImproved = False
+        #     if self.curMutationChance != self.baselineMutationChance:
+        #         self.curMutationChance = self.baselineMutationChance
+        # elif self.scoreImproved is False:
+        #     if self.curMutationChance < 100:
+        #         self.curMutationChance += 5
+        #         if self.curMutationChance > 100:
+        #             self.curMutationChance = 100
 
         # Sort
         allIndividualsCopy = deepcopy(self.curGenerationIndividuals)
@@ -278,7 +278,6 @@ class Optimizer:
         newIndividual = Individual()
         motherGenes = mother.genes
         fatherGenes = father.genes
-        numGenes = len(motherGenes)
         for k in motherGenes:
             geneToCopy = random.choice([motherGenes[k], fatherGenes[k]])
             copiedGene = deepcopy(geneToCopy)
@@ -291,7 +290,7 @@ class Optimizer:
         NOT FOR EXTERNAL USE.
         """
         randomNumber = random.randint(0, 99)
-        if randomNumber < self.curMutationRate:
+        if randomNumber < self.curMutationChance:
             numGenesInIndividual = len(individual.genes)
             numGenesToMutate = random.randint(1, numGenesInIndividual)
             listOfGenesToMutate = random.sample(list(individual.genes.values()), numGenesToMutate)
@@ -419,3 +418,5 @@ class GeneChoice:
 
     def getNumParameters(self):
         return len(self.choices)
+
+
