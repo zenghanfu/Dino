@@ -1,5 +1,5 @@
 # Dino
-Easy AutoML/AutoDL/Hyperparameter optimization via Evolutionary Computing
+Easy AutoML/AutoDL/Hyperparameter optimization via a Genetic Algorithm
 
 Dino has hopes of being "pip install"ed soon...
 
