@@ -50,6 +50,30 @@ while True:
         break
 ```
 
+and if we remove the comments...
+
+```python
+optim = Optimizer(populationSize=10, chanceOfMutation=5)
+optim.addGene("gene_1", GeneBool())
+optim.addGene("gene_2", GeneInt(0, 100))
+optim.addGene("gene_3", GeneFloat(0, 2, 1))
+optim.addGene("gene_4", GeneChoice(["Relu", "Linear", "Conv2D", "Dense", "MaxPool2D"]))
+optim.startTraining()
+while True:
+    print("Bool: " + str(optim.getGeneValue("gene_1")))
+    print("Integer: " + str(optim.getGeneValue("gene_2")))
+    print("Float: " + str(optim.getGeneValue("gene_3")))
+    print("Choice: " + str(optim.getGeneValue("gene_4")))
+    score = random.uniform(0, 100)
+    solutionsExhausted, numCompletedGenerations, bestScore, artifact = optim.next(score)
+    bestParams = optim.getBestParameters()
+    print(bestParams)
+    if solutionsExhausted:
+        break
+```
+
+Yup, Dino is pretty easy!
+
 Have fun using Dino!  If you have any issues that arise, or think a new feature should be added, please do let me know!
 
 As a note, I am not currently accepting pull requests.
