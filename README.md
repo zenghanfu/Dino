@@ -13,7 +13,7 @@ Using Dino is very easy.  In fact, pretty much all of the functions have documen
 optim = Optimizer(10)
 # Create your optimizable parameters
 # The labels (or keys if you prefer) can be any string value you want.  They just need to be unique.
-# The "GeneX" objects encapsulate the optimizable parameters.  All the currently available ones are shown below.
+# The "Gene" objects encapsulate the optimizable parameters.  All the currently available ones are shown below.
 optim.addGene("gene_1", GeneBool())
 optim.addGene("gene_2", GeneInt(0, 100))
 optim.addGene("gene_3", GeneFloat(0, 2, 1))
