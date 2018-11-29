@@ -8,7 +8,9 @@ Dino is based on a few principles.  For one, using Dino has to be easy.  I didn'
 Using Dino is very easy.  In fact, pretty much all of the functions have documentation and examples inside them.  However, here is a brief example:
 
 ```python
-optim = Optimizer(10) # Creates the optimizer.
+# Creates the optimizer and sets the population size to 10.
+# You can also set the chance of mutation.  Check the code!
+optim = Optimizer(10)
 # Create your optimizable parameters
 # The labels (or keys if you prefer) can be any string value you want.  They just need to be unique.
 # The "GeneX" objects encapsulate the optimizable parameters.  All the currently available ones are shown below.
