@@ -14,7 +14,7 @@ Using Dino is very easy.  In fact, pretty much all of the functions have documen
 # You can also set the minimum chance of mutation.
 optim = Optimizer(populationSize=10, chanceOfMutation=5)
 # Create your optimizable parameters
-# The labels (or keys if you prefer) can be any string value you want.  They just need to be unique.
+# The labels can be any string value you want.  They just need to be unique.
 # The "Gene" objects encapsulate the optimizable parameters.  All the currently available ones are shown below.
 optim.addGene("gene_1", GeneBool())
 optim.addGene("gene_2", GeneInt(0, 100))
@@ -24,7 +24,7 @@ optim.addGene("gene_4", GeneChoice(["Relu", "Linear", "Conv2D", "Dense", "MaxPoo
 optim.startTraining() #Prepares the first generation and loads the first set of parameters.
 while True:
     # You call your optimizers getGeneValue to get the value for one of the genes you created above
-    # As you can see, we use the same key to access the value of the created gene.
+    # As you can see, we use the same label to access the value of the created gene.
     # In this case we are just printing the values, but you can plug them in to anything you want.
     print("Bool: " + str(optim.getGeneValue("gene_1")))
     print("Integer: " + str(optim.getGeneValue("gene_2")))
