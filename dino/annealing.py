@@ -8,7 +8,7 @@ from math import ceil, floor
 
 
 class Optimizer:
-    def __init__(self, minimumIterationsToRun: int = 10):
+    def __init__(self, minimumIterationsToRun: int = 100, earlyStoppingIters: int = 10):
         self.numIterationsCompleted: int = 0
         self.bestScore: float = Infinity
         self.bestArtifact = None
@@ -19,6 +19,10 @@ class Optimizer:
         self.curIndividual: Individual = None
         self.curTemperature: int = 100
         self.temperatureStepSize: int = self.curTemperature / minimumIterationsToRun
+        self.earlyStoppingEnabled: bool = False
+        self.earlyStoppingIters: int = earlyStoppingIters
+        self.earlyStoppingUnimprovedIterCount: int = 0
+        self.earlyStoppingNeedToStop: bool = False
 
     def addGene(self, label: str, gene: object):
         """
@@ -73,6 +77,10 @@ class Optimizer:
         self.curIndividual = newIndividual
 
     def next(self, inputScore: float = Infinity, userArtifact: object = None):
+        # Early stopping
+        if self.earlyStoppingNeedToStop:
+            return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
+
         self.numIterationsCompleted += 1
 
         # Set temperature. Linear.
@@ -82,18 +90,33 @@ class Optimizer:
 
 
         # Scoring and saving of scores, artifacts, etc.
+        scoreImproved = False
         self.curIndividual.score = inputScore
         if inputScore < self.bestScore:
+            scoreImproved = True
             self.bestScore = inputScore
             self.bestGenes = self.curIndividual.genes
             if userArtifact is not None:
                 self.bestArtifact = userArtifact
 
+        #Early stopping
+        if self.earlyStoppingEnabled:
+            if scoreImproved:
+                self.earlyStoppingUnimprovedIterCount = 0
+            else:
+                self.earlyStoppingUnimprovedIterCount += 1
+                if self.earlyStoppingUnimprovedIterCount >= self.earlyStoppingIters:
+                    self.earlyStoppingNeedToStop = True
+                    return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
+        #Enable early stopping
+        if self.curTemperature <= 0 and self.earlyStoppingEnabled is False:
+            self.earlyStoppingEnabled = True
+
         # The first iteration is a special case.  We have no loss to compare to, so just mutate the individual.
         if self.numIterationsCompleted == 1:
             self.origIndividual = deepcopy(self.curIndividual)
             self.mutateIndividual(self.curIndividual)
-            return self.numIterationsCompleted, self.bestScore, self.bestArtifact
+            return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
 
         # Determine which solution to use
         curScore = self.curIndividual.score
@@ -114,7 +137,7 @@ class Optimizer:
 
         # All of the below is ran regardless of which solution was chosen
         self.mutateIndividual(self.curIndividual)
-        return self.numIterationsCompleted, self.bestScore, self.bestArtifact
+        return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
 
     def mutateIndividual(self, individual):
         """
@@ -196,8 +219,8 @@ class GeneInt:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 1:
-            percentageOfRangeToSampleFrom = 1 / 100
+        if optimizer.curTemperature < 5:
+            percentageOfRangeToSampleFrom = 5 / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -234,8 +257,8 @@ class GeneFloat:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 1:
-            percentageOfRangeToSampleFrom = 1 / 100
+        if optimizer.curTemperature < 5:
+            percentageOfRangeToSampleFrom = 5 / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -284,7 +307,7 @@ class GeneChoice:
     def getNumParameters(self):
         return len(self.choices)
 
-# optim = Optimizer(minimumIterationsToRun=485632)
+# optim = Optimizer(minimumIterationsToRun=10000, earlyStoppingIters=1000)
 # optim.addGene("gene_1", GeneBool())
 # optim.addGene("gene_2", GeneInt(0, 100))
 # optim.addGene("gene_3", GeneFloat(0, 2, 8))
@@ -299,4 +322,7 @@ class GeneChoice:
 #     print("TEMPERATURE: " + str(optim.curTemperature))
 #     print("*******************************")
 #     score = random.uniform(0, 100)
-#     completedIterations, bestScore, artifact = optim.next(score)
+#     optimizingComplete, completedIterations, bestScore, artifact = optim.next(score)
+#     if optimizingComplete:
+#         print("Optimization Finished!")
+#         break
