@@ -10,11 +10,9 @@ from math import ceil, floor
 class Optimizer:
     def __init__(self, minimumIterationsToRun: int = 10):
         self.numIterationsCompleted: int = 0
-        self.bestIndividual: Individual = None
         self.bestScore: float = Infinity
         self.bestArtifact = None
         self.bestGenes = None
-        self.listOfHashes: list = []
         self.numPossibleSolutions: int = 0
         self.requestedGenes: dict = {}
         self.origIndividual: Individual = None
@@ -77,10 +75,11 @@ class Optimizer:
     def next(self, inputScore: float = Infinity, userArtifact: object = None):
         self.numIterationsCompleted += 1
 
-        # Set temperature
+        # Set temperature. Linear.
         self.curTemperature -= self.temperatureStepSize
         if self.curTemperature < 0:
             self.curTemperature = 0
+
 
         # Scoring and saving of scores, artifacts, etc.
         self.curIndividual.score = inputScore
@@ -121,8 +120,17 @@ class Optimizer:
         """
         NOT FOR EXTERNAL USE.
         """
-        listOfGenesToMutate = random.sample(list(individual.genes.values()), 1)
-        listOfGenesToMutate[0].mutate(self)
+        numGenesInIndividual = len(individual.genes)
+        adjustedTemperature = self.curTemperature
+        if adjustedTemperature < 1:
+            adjustedTemperature = 1
+        adjustedNumGenesInIndividual = ceil(numGenesInIndividual * (adjustedTemperature / 100))
+        if adjustedNumGenesInIndividual > numGenesInIndividual:
+            adjustedNumGenesInIndividual = numGenesInIndividual
+        numGenesToMutate = random.randint(1, adjustedNumGenesInIndividual)
+        listOfGenesToMutate = random.sample(list(individual.genes.values()), numGenesToMutate)
+        for gene in listOfGenesToMutate:
+            gene.mutate(self)
 
     def getBestParameters(self):
         """
@@ -188,8 +196,8 @@ class GeneInt:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 5:
-            percentageOfRangeToSampleFrom = 5 / 100
+        if optimizer.curTemperature < 1:
+            percentageOfRangeToSampleFrom = 1 / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -226,8 +234,8 @@ class GeneFloat:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 5:
-            percentageOfRangeToSampleFrom = 5 / 100
+        if optimizer.curTemperature < 1:
+            percentageOfRangeToSampleFrom = 1 / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -242,7 +250,6 @@ class GeneFloat:
             if possibleValue >= self.min and possibleValue <= self.max:
                 break
         self.value = possibleValue
-        # self.value = round(random.uniform(self.min, self.max), self.numDecimalPlaces)
 
     def getHashableValue(self) -> str:
         return str(self.value)
@@ -277,10 +284,10 @@ class GeneChoice:
     def getNumParameters(self):
         return len(self.choices)
 
-# optim = Optimizer(minimumIterationsToRun=100)
+# optim = Optimizer(minimumIterationsToRun=485632)
 # optim.addGene("gene_1", GeneBool())
 # optim.addGene("gene_2", GeneInt(0, 100))
-# optim.addGene("gene_3", GeneFloat(0, 2, 1))
+# optim.addGene("gene_3", GeneFloat(0, 2, 8))
 # optim.addGene("gene_4", GeneChoice(["Relu", "Linear", "Conv2D", "Dense", "MaxPool2D"]))
 # optim.startTraining()
 # while True:
@@ -288,5 +295,8 @@ class GeneChoice:
 #     print("Integer: " + str(optim.getGeneValue("gene_2")))
 #     print("Float: " + str(optim.getGeneValue("gene_3")))
 #     print("Choice: " + str(optim.getGeneValue("gene_4")))
+#     print("*******************************")
+#     print("TEMPERATURE: " + str(optim.curTemperature))
+#     print("*******************************")
 #     score = random.uniform(0, 100)
 #     completedIterations, bestScore, artifact = optim.next(score)
