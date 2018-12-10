@@ -17,8 +17,8 @@ class Optimizer:
         self.requestedGenes: dict = {}
         self.origIndividual: Individual = None
         self.curIndividual: Individual = None
-        self.curTemperature: int = 100
-        self.temperatureStepSize: int = self.curTemperature / minimumIterationsToRun
+        self.curTemperature: float = 100
+        self.temperatureStepSize: float = self.curTemperature / minimumIterationsToRun
         self.earlyStoppingEnabled: bool = False
         self.earlyStoppingIters: int = earlyStoppingIters
         self.earlyStoppingUnimprovedIterCount: int = 0
@@ -115,7 +115,15 @@ class Optimizer:
         # The first iteration is a special case.  We have no loss to compare to, so just mutate the individual.
         if self.numIterationsCompleted == 1:
             self.origIndividual = deepcopy(self.curIndividual)
-            self.mutateIndividual(self.curIndividual)
+            # Ensure the new Individual is different than the last.
+            startingHash = self.curIndividual.getHash()
+            while True:
+                individualCopy = deepcopy(self.curIndividual)
+                self.mutateIndividual(individualCopy)
+                newHash = individualCopy.getHash()
+                if newHash != startingHash:
+                    self.curIndividual = individualCopy
+                    break
             return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
 
         # Determine which solution to use
@@ -135,8 +143,16 @@ class Optimizer:
         elif curScore < origScore:
             self.origIndividual = deepcopy(self.curIndividual)
 
-        # All of the below is ran regardless of which solution was chosen
-        self.mutateIndividual(self.curIndividual)
+        # All of the below is ran regardless of which solution was chosen.
+        #Ensure the new Individual is different than the last.
+        startingHash = self.curIndividual.getHash()
+        while True:
+            individualCopy = deepcopy(self.curIndividual)
+            self.mutateIndividual(individualCopy)
+            newHash = individualCopy.getHash()
+            if newHash != startingHash:
+                self.curIndividual = individualCopy
+                break
         return self.earlyStoppingNeedToStop, self.numIterationsCompleted, self.bestScore, self.bestArtifact
 
     def mutateIndividual(self, individual):
@@ -145,8 +161,8 @@ class Optimizer:
         """
         numGenesInIndividual = len(individual.genes)
         adjustedTemperature = self.curTemperature
-        if adjustedTemperature < 1:
-            adjustedTemperature = 1
+        if adjustedTemperature <= 0:
+            adjustedTemperature = self.temperatureStepSize
         adjustedNumGenesInIndividual = ceil(numGenesInIndividual * (adjustedTemperature / 100))
         if adjustedNumGenesInIndividual > numGenesInIndividual:
             adjustedNumGenesInIndividual = numGenesInIndividual
@@ -197,7 +213,12 @@ class GeneBool:
         self.value = random.choice([True, False])
 
     def mutate(self, optimizer: Optimizer):
-        self.value = random.choice([True, False])
+        chanceOfMutation = optimizer.curTemperature
+        if chanceOfMutation <= 0:
+            chanceOfMutation = optimizer.temperatureStepSize
+        randomNumber = random.uniform(0, 100)
+        if randomNumber < chanceOfMutation:
+            self.value = random.choice([True, False])
 
     def getHashableValue(self) -> str:
         return str(self.value)
@@ -219,8 +240,8 @@ class GeneInt:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 5:
-            percentageOfRangeToSampleFrom = 5 / 100
+        if optimizer.curTemperature <= 0:
+            percentageOfRangeToSampleFrom = optimizer.temperatureStepSize / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -257,8 +278,8 @@ class GeneFloat:
 
     def mutate(self, optimizer: Optimizer):
         percentageOfRangeToSampleFrom = 0
-        if optimizer.curTemperature < 5:
-            percentageOfRangeToSampleFrom = 5 / 100
+        if optimizer.curTemperature <= 0:
+            percentageOfRangeToSampleFrom = optimizer.temperatureStepSize / 100
         else:
             percentageOfRangeToSampleFrom = optimizer.curTemperature / 100
         totalParameters = self.getNumParameters()
@@ -298,7 +319,12 @@ class GeneChoice:
         self.value = random.choice(self.choices)
 
     def mutate(self, optimizer: Optimizer):
-        self.value = random.choice(self.choices)
+        chanceOfMutation = optimizer.curTemperature
+        if chanceOfMutation <= 0:
+            chanceOfMutation = optimizer.temperatureStepSize
+        randomNumber = random.uniform(0, 100)
+        if randomNumber < chanceOfMutation:
+            self.value = random.choice(self.choices)
 
     def getHashableValue(self) -> str:
         indexOfCurrentValue = self.choices.index(self.value)
@@ -307,9 +333,9 @@ class GeneChoice:
     def getNumParameters(self):
         return len(self.choices)
 
-# optim = Optimizer(minimumIterationsToRun=10000, earlyStoppingIters=1000)
+# optim = Optimizer(minimumIterationsToRun=100, earlyStoppingIters=10)
 # optim.addGene("gene_1", GeneBool())
-# optim.addGene("gene_2", GeneInt(0, 100))
+# optim.addGene("gene_2", GeneInt(1, 100))
 # optim.addGene("gene_3", GeneFloat(0, 2, 8))
 # optim.addGene("gene_4", GeneChoice(["Relu", "Linear", "Conv2D", "Dense", "MaxPool2D"]))
 # optim.startTraining()
