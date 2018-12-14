@@ -1,13 +1,11 @@
 # Dino
-Easy AutoML/AutoDL/Hyperparameter optimization via a Genetic Algorithm.
+Easy AutoML/AutoDL/Hyperparameter optimization via metaheuristics.
 
-Dino has hopes of being "pip install"ed soon...
+Dino includes two optimization algorithms.  One is a genetic algorithm, and the other is based on simulated annealing.  I implemented both as I believe they each have merit over the other.  Simulated annealing is good for finding a minimum within a more explicit timeframe, while a genetic algorithm may find a better solution than simulated annealing, but possibly take longer to do so.  As this was created for the use case of deep learning, which frequently has models that take quite a while to train, I personally find myself using simulated annealing more than the genetic algorithm, as I can more accurately estimate how long the training will take.
 
-Dino is intended to be a simple solution to all of your difficult optimization needs.  While Dino has been designed with general optimization in mind, specifically minimization of a loss function, It was born out of my hope to make Deep Learning architecture search and hyperparameter optimization easy.
+Currently the algorithms are seperated into their own packages and expose their own API's.  There will likely be an all encompassing frontend API in the future, but luckily enough, the interfaces are virtually identical as they stand.
 
-Dino is based on a few principles.  For one, using Dino has to be easy.  I didn't want a framework that was complicated to use, as I would be using it a lot.  The simpler the better.  Secondly, Dino has been designed to be adaptive.  As I assume most of those in the deep learning community know, it's no fun setting parameters, testing them, waiting two and a half lifetimes, and then trying a new set of parameters.  So, you don't want to have to do that for your model's optimizer as well, right? Dino's adaptability will likely grow over time, but it already gives good results.  Dino was also designed to be efficient.  As you will notice if you run the following code below, Dino really slows down towards the end of the solution space, and it's not due to bad programming.  Dino keeps track of the hash of all the possible solutions it has seen and doesn't allow already seen solutions to be regenerated, hence the slowdown, so you never waste computational time on already scored solutions.  This really helps when models take hours, days, or weeks to test.
-
-Using Dino is very easy.  In fact, pretty much all of the functions have documentation and examples inside them.  However, here is a brief, extensively commented, example:
+Here is an example of the genetic algorithm interface:
 
 ```python
 # Creates the optimizer and sets the population size to 10.
@@ -72,7 +70,40 @@ while True:
         break
 ```
 
-Yup, Dino is pretty easy!
+The simulated annealing interface is very, very, similar.  Here it is:
+
+```python
+# The "minimumIterationsToRun" is just what it sounds like.  The more the better.
+# "earlyStoppingIters" dictates how many iterations to wait for a better solution to be found after "minimumIterationsToRun".
+# After "minimumIterationsToRun" is exhausted the algorithm acts as a purely greedy hillclimbing algorithm.
+# So if you want to capitalize on the greedy portion, set "earlyStoppingIters" to a relatively large number.
+# For example, in testing, I often set "minimumIterationsToRun" to 100 and "earlyStoppingIters" to 20.
+# Play with these parameters to find your ideal setup.
+optim = Optimizer(minimumIterationsToRun=100, earlyStoppingIters=20)
+# The genes act the same as in the genetic algorithm.
+optim.addGene("gene_1", GeneBool())
+optim.addGene("gene_2", GeneInt(1, 100))
+optim.addGene("gene_3", GeneFloat(0, 2, 8))
+optim.addGene("gene_4", GeneChoice(["Relu", "Linear", "Conv2D", "Dense", "MaxPool2D"]))
+optim.startTraining()
+while True:
+    print("Bool: " + str(optim.getGeneValue("gene_1")))
+    print("Integer: " + str(optim.getGeneValue("gene_2")))
+    print("Float: " + str(optim.getGeneValue("gene_3")))
+    print("Choice: " + str(optim.getGeneValue("gene_4")))
+    score = random.uniform(0, 100)
+    # You feed the same data to the "next" function as you do in the genetic version, including an artifact.
+    # The main difference is that "optimizingComplete" tells you when all your requested iterations are used up
+    # and optimization has stopped.  You get no improvement after it returns True, so stop there.
+    optimizingComplete, completedIterations, bestScore, artifact = optim.next(score)
+    bestParams = optim.getBestParameters()
+    print(bestParams)
+    if optimizingComplete:
+        print("Optimization Finished!")
+        break
+```
+
+As you can see, the two algorithms' frontends are very similar.  There are only minor differences due to their internal workings.
 
 Have fun using Dino!  If you have any issues that arise, or think a new feature should be added, please do let me know!
 
