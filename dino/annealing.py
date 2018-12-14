@@ -8,7 +8,7 @@ from math import ceil, floor
 
 
 class Optimizer:
-    def __init__(self, minimumIterationsToRun: int = 100, earlyStoppingIters: int = 10):
+    def __init__(self, minimumIterationsToRun: int = 100, earlyStoppingIters: int = 20):
         self.numIterationsCompleted: int = 0
         self.bestScore: float = Infinity
         self.bestArtifact = None
