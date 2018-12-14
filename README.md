@@ -3,9 +3,15 @@ Easy AutoML/AutoDL/Hyperparameter optimization via metaheuristics.
 
 Dino includes two optimization algorithms.  One is a genetic algorithm, and the other is based on simulated annealing.  I implemented both as I believe they each have merit over the other.  Simulated annealing is good for finding a minimum within a more explicit timeframe, while a genetic algorithm may find a better solution than simulated annealing, but possibly take longer to do so.  As this was created for the use case of deep learning, which frequently has models that take quite a while to train, I personally find myself using simulated annealing more than the genetic algorithm, as I can more accurately estimate how long the training will take.
 
+As a brief introduction to the algorithms I will give a quick overview of some of the internal workings in each below.
+
+Genetic Algorithm: The genetic algorithm "breeds" and mutates solutions that it has seen, and also ensures any new solutions it generates are unique.  There is an emphasis on breeding together better performing solutions, however, to even out the playing field, some less performant solutions are kept and bred as well.  Specifically, the best 25% are kept, and 10% of the other solutions are kept, via random sampling.  The actual mate selection is performed on a sliding scale.  Higher performing solutions have a higher chance of being a mate, and lower performing solutions have a lower chance of being a mate.  Once two mates are selected, they create a new solution.  This new solution is then given a chance to mutate.  If it is selected for mutation, it will have a random number of it's parameters mutated.  This new solution is then compared to all previously seen solutions.  If it is not unique, we repeat the breeding process until one is.  This process will continue until the new generation is full of unique, never before seen, solutions.
+
+Simulated Annealing: The simulated annealing algorithm is based on "temperature".  In this implementation the temperature slides down a linear scale based on the number of iterations you want to run.  The temperature is used to balance the likelihood that a worse performing solution will be accepted. IE Greediness vs Exploration.  The actual chance of the worse performing solution being accepted is calculated by normalizing the difference between the previous best solution and the current, less performant, solution.  This normalized value is then subtracted from the current iterations temperature to get the chance of the less performant solution being accepted.  As expected, better performing solutions are accepted immediately.  The temperature is also used to determine the range of values to choose from numeric ranges, and also dictates the likelihood of a new value being chosen from a list.
+
 Currently the algorithms are seperated into their own packages and expose their own API's.  There will likely be an all encompassing frontend API in the future, but luckily enough, the interfaces are virtually identical as they stand.
 
-Here is an example of the genetic algorithm interface:
+Here is an example of the genetic algorithm interface.  It also doubles as a good walkthrough in general:
 
 ```python
 # Creates the optimizer and sets the population size to 10.
